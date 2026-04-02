@@ -1,0 +1,22 @@
+{
+  "name": "xflow",
+  "owner": {
+    "name": "oleg_orlov"
+  },
+  "metadata": {
+    "description": "xflow — cross-agentic planning and execution plugin for Claude Code",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "xflow",
+      "description": "Cross-agentic planning and execution workflow with structured checkpoints, phase-based task DAG, and adversarial verification. Provides /xfeature, /xplan, /xexecute commands.",
+      "version": "0.1.0",
+      "author": {
+        "name": "oleg_orlov"
+      },
+      "tags": ["planning", "execution", "workflow", "cross-agentic", "checkpoints"],
+      "source": "./"
+    }
+  ]
+}

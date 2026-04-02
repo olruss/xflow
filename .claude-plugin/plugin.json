@@ -1,0 +1,9 @@
+{
+  "name": "xflow",
+  "version": "0.1.0",
+  "description": "Cross-agentic planning and execution workflow with structured checkpoints, phase-based task DAG, and adversarial verification",
+  "author": {
+    "name": "xflow contributors"
+  },
+  "keywords": ["planning", "execution", "workflow", "cross-agentic", "checkpoints"]
+}
