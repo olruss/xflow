@@ -10,8 +10,17 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Detect piped execution (wget/curl | bash) — BASH_SOURCE[0] is empty or "-"
+PIPED=false
+if [[ -z "${BASH_SOURCE[0]:-}" || "${BASH_SOURCE[0]}" == "-" ]]; then
+    PIPED=true
+    SCRIPT_DIR=""
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
 PLUGIN_NAME="xflow"
+GITHUB_REPO="olruss/xflow"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -27,10 +36,6 @@ log_error()   { echo -e "${RED}[xflow]${NC} $*" >&2; }
 # ── Claude Code ───────────────────────────────────────────────────────────────
 
 install_claude() {
-    # The marketplace root is the repo root (same directory as install.sh)
-    local marketplace_root="$SCRIPT_DIR"
-    local marketplace_manifest="$marketplace_root/.claude-plugin/marketplace.json"
-
     log_info "Installing xflow for Claude Code..."
 
     if ! command -v claude &>/dev/null; then
@@ -38,17 +43,22 @@ install_claude() {
         return 1
     fi
 
-    if [ ! -f "$marketplace_manifest" ]; then
-        log_error "Marketplace manifest not found at $marketplace_manifest"
-        return 1
+    # Determine marketplace source: GitHub (piped/remote) or local path
+    local marketplace_source
+    if $PIPED || [ -z "$SCRIPT_DIR" ]; then
+        marketplace_source="$GITHUB_REPO"
+        log_info "Installing from GitHub ($GITHUB_REPO)..."
+    else
+        marketplace_source="$SCRIPT_DIR"
+        log_info "Installing from local path ($SCRIPT_DIR)..."
     fi
 
-    # Step 1: Register the local marketplace (idempotent — skip if already registered)
-    log_info "Registering local marketplace..."
+    # Step 1: Register marketplace (idempotent)
+    log_info "Registering marketplace..."
     if claude plugin marketplace list 2>/dev/null | grep -q "^xflow "; then
-        log_info "Marketplace 'xflow' already registered."
+        log_info "Marketplace 'xflow' already registered — skipping."
     else
-        claude plugin marketplace add "$marketplace_root" --scope user 2>&1 \
+        claude plugin marketplace add "$marketplace_source" --scope user 2>&1 \
             && log_success "Marketplace registered." \
             || { log_error "Failed to register marketplace."; return 1; }
     fi
