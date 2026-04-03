@@ -46,6 +46,8 @@ claude plugin install xflow@xflow
 
 ### Option 2 — One-liner (curl / wget)
 
+The installer is interactive: it prompts you for which CLI and scope even when piped.
+
 ```bash
 # curl
 curl -fsSL https://raw.githubusercontent.com/olruss/xflow/main/install.sh | bash

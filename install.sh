@@ -31,14 +31,20 @@ log_warn()    { echo -e "  ${YELLOW}!${NC} $*"; }
 log_error()   { echo -e "  ${RED}✘${NC} $*" >&2; }
 
 # Read from /dev/tty when stdin is a pipe (wget/curl | bash pattern).
-# Falls back to the default value silently when no terminal is available.
+# Falls back to the default value when no terminal is available (CI/headless).
 ask() {
     local __var="$1" __prompt="$2" __default="${3:-}"
     printf '%s' "$__prompt"
-    local __ans
-    if   [ -t 0 ];         then read -r __ans
-    elif [ -e /dev/tty ];  then read -r __ans </dev/tty
-    else __ans="$__default"; echo "$__default"
+    local __ans=""
+    if [ -t 0 ]; then
+        read -r __ans || true
+    elif { : </dev/tty; } 2>/dev/null; then
+        # /dev/tty is openable — read interactively even when piped (wget/curl | bash)
+        read -r __ans </dev/tty
+    else
+        # Headless/CI — use default silently
+        __ans="$__default"
+        printf '%s\n' "$__default"
     fi
     printf -v "$__var" '%s' "${__ans:-$__default}"
 }
