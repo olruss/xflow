@@ -231,19 +231,25 @@ main() {
             echo "  (no args)    Interactive mode"
             exit 0 ;;
         "")
-            echo "Install for which environments?"
-            echo "  1) Claude Code only"
-            echo "  2) GitHub Copilot CLI only"
-            echo "  3) Both"
-            echo ""
-            printf "Choose [1-3]: "
-            read -r choice
-            case "$choice" in
-                1) do_claude=true ;;
-                2) do_copilot=true ;;
-                3) do_claude=true; do_copilot=true ;;
-                *) log_error "Invalid choice"; exit 1 ;;
-            esac ;;
+            # When piped (wget/curl | bash), default to --claude non-interactively
+            if $PIPED; then
+                log_info "No target specified — defaulting to --claude (piped mode)."
+                do_claude=true
+            else
+                echo "Install for which environments?"
+                echo "  1) Claude Code only"
+                echo "  2) GitHub Copilot CLI only"
+                echo "  3) Both"
+                echo ""
+                printf "Choose [1-3]: "
+                read -r choice
+                case "$choice" in
+                    1) do_claude=true ;;
+                    2) do_copilot=true ;;
+                    3) do_claude=true; do_copilot=true ;;
+                    *) log_error "Invalid choice"; exit 1 ;;
+                esac
+            fi ;;
         *)
             log_error "Unknown argument: $1"
             echo "Run $0 --help for usage."

@@ -48,10 +48,10 @@ claude plugin install xflow@xflow
 
 ```bash
 # curl
-curl -fsSL https://raw.githubusercontent.com/olruss/xflow/main/install.sh | bash -s -- --claude
+curl -fsSL https://raw.githubusercontent.com/olruss/xflow/main/install.sh | bash
 
 # wget
-wget -qO- https://raw.githubusercontent.com/olruss/xflow/main/install.sh | bash -s -- --claude
+wget -qO- https://raw.githubusercontent.com/olruss/xflow/main/install.sh | bash
 ```
 
 ### Option 3 — Clone and install
