@@ -93,23 +93,22 @@ def install_claude(scope="user"):
     source = str(SCRIPT_DIR) if SCRIPT_DIR else GITHUB_REPO
     log_info(f"Source: {'local clone' if SCRIPT_DIR else f'GitHub ({GITHUB_REPO})'}")
 
-    log_info("Registering marketplace...")
-    result = subprocess.run(
-        ["claude", "plugin", "marketplace", "list"],
+    log_info("Syncing marketplace...")
+    r = subprocess.run(
+        ["claude", "plugin", "marketplace", "update", "xflow"],
         capture_output=True, text=True
     )
-    already = any(
-        line.startswith("xflow ") or line.strip() == "xflow"
-        for line in result.stdout.splitlines()
-    )
-    if already:
-        log_info("Marketplace already registered — skipping.")
-    else:
+    if r.returncode != 0:
+        # Not registered yet — add it
+        log_info("Registering marketplace...")
         r = subprocess.run(["claude", "plugin", "marketplace", "add", source, "--scope", "user"])
         if r.returncode != 0:
             log_error("Failed to register marketplace.")
             return False
         log_success("Marketplace registered.")
+    else:
+        print(r.stdout, end="")
+        log_success("Marketplace synced.")
 
     log_info(f"Installing plugin (scope: {scope})...")
     r = subprocess.run(["claude", "plugin", "install", "xflow@xflow", "--scope", scope])
