@@ -6,52 +6,123 @@ argument-hint: "[feature description]"
 
 # xfeature — Full Feature Workflow
 
-You are orchestrating a complete feature implementation: plan it, get user approval, then execute it.
+You are running in the main conversation context. Implement the feature in `$ARGUMENTS` end-to-end:
+plan it in the main context (so `AskUserQuestion` is available throughout), get user approval,
+then execute phase by phase. Do NOT call `EnterPlanMode` — planning happens here.
 
-## Step 1: Validate Input
+---
 
-If `$ARGUMENTS` is empty, use `AskUserQuestion` to ask: "What feature do you want to implement?"
+## Phase 1: Planning
 
-## Step 2: Planning Phase
+### 1a. Quick Exploration (parallel)
 
-Call `EnterPlanMode` to enter planning mode.
+Before asking anything, explore the project in parallel:
 
-Then spawn the xplanner agent:
+- Read `CLAUDE.md` or `README.md` — tech stack, conventions, test command
+- Scan directory structure — entry points, modules, test locations
+- Search for files most likely touched by the requested change (Grep for relevant keywords)
 
+Use `Agent(subagent_type: "Explore")` for deep parallel searches when the scope is unclear.
+
+### 1b. Ask Targeted Questions
+
+Use `AskUserQuestion` with 3–5 focused questions. Ask only what the code doesn't answer.
+
+**Good questions:**
+- "I found two auth patterns — `src/middleware/jwt.ts` and `src/auth/verify.ts`. Which should the new endpoint follow?"
+- "Will this be a breaking API change, or must it stay backward-compatible?"
+- "There are no existing tests for this module. Should I create them, or skip for now?"
+
+**Never ask:** "What files do I need to change?" or "Can you explain more?"
+
+### 1c. Follow-Up Exploration
+
+Based on the user's answers, do any targeted follow-up reads or searches.
+
+### 1d. Write the Plan File
+
+Generate a kebab-case slug from the feature name (e.g., "add JWT auth" → `add-jwt-auth`).
+Write the plan to: `~/.claude/plans/<slug>.md`
+
+Use this structure **exactly**:
+
+```markdown
+# Plan: [Feature Title]
+
+## Context
+
+[1–3 sentences: why this change is needed]
+
+**Approach:** [One sentence: implementation strategy and why]
+
+---
+
+### Phase 1: [Title]
+
+**Files:**
+- `exact/path/to/file.ts` — [what changes and why]
+
+**Acceptance:**
+- [ ] [exact shell command or observable state]
+
+---
+
+### Phase 2: [Title]
+
+**Files:**
+- `exact/path.ts` — [what changes]
+
+**Acceptance:**
+- [ ] [criterion]
+
+<action type="commit" message="feat: add X"/>
+
+---
+
+## Verification
+
+```bash
+[exact end-to-end verification command]
 ```
-Agent({
-  subagent_type: "xflow:workflow:xplanner",
-  description: "Plan: $ARGUMENTS",
-  prompt: "Plan the following feature for this codebase:\n\n$ARGUMENTS\n\nThe plan file path is provided in the plan mode system message. Follow the xplanner process: quick scan → skeleton → targeted user questions → refined exploration → write final plan file."
-})
+Expected: [what success looks like]
 ```
 
-Wait for xplanner to return. After it returns, call `ExitPlanMode` to present the plan to the user for approval.
+**Plan rules:**
+- Every file path must be the exact real path (from your exploration — do not guess)
+- Every acceptance criterion must be a runnable shell command or clearly observable state
+- Phases touch 1–5 files each; target 30–60 lines total
+- Add `<checkpoint message="..."/>` before irreversible operations
+- Add `<action type="commit" message="..."/>` at natural commit points
+- Database/schema changes always get their own phase
 
-## Step 3: After Plan Approval
+### 1e. Present for Approval
 
-**This step triggers after the user approves the plan** (you will receive a `plan_mode_exit` attachment).
+Show the full plan and ask for approval:
 
-Immediately invoke the execution skill:
+> Here's the implementation plan for **[feature name]**:
+>
+> ---
+> [full plan content]
+> ---
+>
+> Approve to start execution, or share feedback to revise.
+
+Use `AskUserQuestion` with **Approve** and a feedback option.
+
+On feedback: revise the plan file, re-show it. Repeat until approved.
+
+---
+
+## Phase 2: Execution
+
+Once the user approves, immediately invoke the execution skill:
 
 ```
 Skill({ skill: "xexecute" })
 ```
 
-The xexecute skill will find the most recently approved plan file and execute it.
+The xexecute skill will find the most recently written plan file and execute it phase by phase.
 
-## Handling Rejection
+---
 
-If the user rejects the plan and provides feedback:
-
-1. Call `EnterPlanMode` again
-2. Re-spawn xplanner with the feedback:
-   ```
-   Agent({
-     subagent_type: "xflow:workflow:xplanner",
-     prompt: "Revise the plan.\n\nOriginal feature: $ARGUMENTS\n\nUser feedback: [feedback]\n\nUpdate the same plan file. Keep what worked, address all feedback points."
-   })
-   ```
-3. Call `ExitPlanMode` again
-
-Repeat until approved.
+If `$ARGUMENTS` is empty: use `AskUserQuestion` to ask "What feature do you want to implement?"
