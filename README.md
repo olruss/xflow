@@ -47,20 +47,21 @@ claude plugin install xflow@xflow
 ### Option 2 — One-liner (curl / wget)
 
 The installer is interactive: it prompts you for which CLI and scope even when piped.
+Requires Python 3 (no extra dependencies — stdlib only).
 
 ```bash
 # curl
-curl -fsSL https://raw.githubusercontent.com/olruss/xflow/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/olruss/xflow/main/install.py | python3
 
 # wget
-wget -qO- https://raw.githubusercontent.com/olruss/xflow/main/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/olruss/xflow/main/install.py | python3
 ```
 
 ### Option 3 — Clone and install
 
 ```bash
 git clone https://github.com/olruss/xflow.git ~/my/xflow
-bash ~/my/xflow/install.sh --claude
+python3 ~/my/xflow/install.py --claude
 ```
 
 Restart Claude Code after installation to activate the plugin.
@@ -68,7 +69,7 @@ Restart Claude Code after installation to activate the plugin.
 ### GitHub Copilot CLI
 
 ```bash
-bash install.sh --copilot
+python3 install.py --copilot
 ```
 
 Installs simplified single-agent versions of the skills (no multi-agent orchestration).
